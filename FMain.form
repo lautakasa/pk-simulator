@@ -1,0 +1,236 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,136,79)
+  { Label3 Label
+    MoveScaled(6,1,33,4)
+    Text = ("Local Wash command duration (s)")
+    Alignment = Align.Right
+  }
+  { Read_button Button
+    MoveScaled(35,25,16,9)
+    Font = Font["Bold"]
+    Text = ("Start")
+  }
+  { Button3 Button
+    MoveScaled(54,25,16,4)
+    Text = ("Break")
+  }
+  { ProgressBar1 ProgressBar
+    MoveScaled(107,25,27,4)
+  }
+  { Button1 Button
+    MoveScaled(9,30,16,4)
+    Text = ("Test port")
+  }
+  { Exit Button
+    MoveScaled(54,30,16,4)
+    Text = ("Exit")
+  }
+  { Slider2 Slider
+    MoveScaled(40,1,28,4)
+    MinValue = 1
+    MaxValue = 60
+    Value = 1
+  }
+  { ValueBox2 ValueBox
+    MoveScaled(69,1,6,4)
+  }
+  { ComboBox1 ComboBox
+    MoveScaled(5,25,24,4)
+    Text = ("Select Comm port")
+  }
+  { Separator4 Separator
+    MoveScaled(52,26,1,8)
+  }
+  { Label9 Label
+    MoveScaled(70,35,34,3)
+    Text = ("Outgoing wash number (Local wash)")
+    Alignment = Align.Right
+  }
+  { ValueBox4 ValueBox
+    MoveScaled(1,38,67,40)
+    Font = Font["Bold,256"]
+    Text = ("ValueBox4")
+  }
+  { ValueBox5 ValueBox
+    MoveScaled(69,38,61,44)
+    Font = Font["Bold,256"]
+    Text = ("ValueBox5")
+  }
+  { Label8 Label
+    MoveScaled(70,25,14,3)
+    Text = ("Last WashNum")
+    Alignment = Align.Right
+  }
+  { Separator2 Separator
+    MoveScaled(32,24,1,11)
+  }
+  { Label10 Label
+    MoveScaled(2,35,31,3)
+    Text = ("WashQ Wash Number (incoming)")
+    Alignment = Align.Right
+  }
+  { Slider1 Slider
+    MoveScaled(40,5,28,4)
+    MinValue = 1
+    MaxValue = 3600
+    Value = 1
+  }
+  { ValueBox1 ValueBox
+    MoveScaled(69,5,6,4)
+  }
+  { Label1 Label
+    MoveScaled(7,5,32,4)
+    Text = ("Delay between local washes (s)")
+    Alignment = Align.Right
+  }
+  { Slider3 Slider
+    MoveScaled(40,9,28,4)
+    MinValue = 1
+    MaxValue = 20
+    Value = 1
+  }
+  { ValueBox3 ValueBox
+    MoveScaled(69,9,6,4)
+  }
+  { Label2 Label
+    MoveScaled(-1,9,40,4)
+    Text = ("Delay from command to busy signal (1/10s)")
+    Alignment = Align.Right
+  }
+  { Label4 Label
+    MoveScaled(1,13,38,4)
+    Text = ("Wash length (s)")
+    Alignment = Align.Right
+  }
+  { Slider4 Slider
+    MoveScaled(40,13,28,4)
+    MinValue = 6
+    MaxValue = 600
+    Value = 1
+  }
+  { ValueBox6 ValueBox
+    MoveScaled(69,13,6,4)
+  }
+  { Label5 Label
+    MoveScaled(92,25,14,3)
+    Text = ("Wash progress")
+    Alignment = Align.Right
+  }
+  { Label6 Label
+    MoveScaled(75,9,24,4)
+    Text = ("Max RND wash number")
+    Alignment = Align.Right
+  }
+  { Slider5 Slider
+    MoveScaled(100,9,14,4)
+    MinValue = 1
+    MaxValue = 64
+    Value = 1
+  }
+  { ValueBox7 ValueBox
+    MoveScaled(115,9,6,4)
+  }
+  { Label11 Label
+    MoveScaled(76,1,23,4)
+    Text = ("Wash length randomizer")
+    Alignment = Align.Right
+  }
+  { Slider6 Slider
+    MoveScaled(100,5,14,4)
+    MinValue = 1
+    MaxValue = 1000
+    Value = 1
+  }
+  { ValueBox8 ValueBox
+    MoveScaled(115,5,6,4)
+  }
+  { Label12 Label
+    MoveScaled(75,5,24,4)
+    Text = ("Local Delay randomizer")
+    Alignment = Align.Right
+  }
+  { Slider7 Slider
+    MoveScaled(100,1,14,4)
+    MinValue = 1
+    MaxValue = 120
+    Value = 1
+  }
+  { ValueBox9 ValueBox
+    MoveScaled(115,1,6,4)
+  }
+  { ValueBox10 ValueBox
+    MoveScaled(85,25,6,4)
+    Font = Font["+2"]
+  }
+  { ValueBox11 ValueBox
+    MoveScaled(85,30,6,4)
+    Font = Font["+2"]
+  }
+  { Label7 Label
+    MoveScaled(70,30,14,3)
+    Text = ("Washes")
+    Alignment = Align.Right
+  }
+  { ValueBox12 ValueBox
+    MoveScaled(110,30,6,4)
+    Font = Font["+2"]
+  }
+  { Label13 Label
+    MoveScaled(92,30,17,3)
+    Text = ("To next local wash")
+    Alignment = Align.Right
+  }
+  { TextBox1 TextBox
+    MoveScaled(119,30,15,3)
+    Alignment = Align.Center
+  }
+  { TextBox2 TextBox
+    MoveScaled(119,33,15,3)
+    Alignment = Align.Center
+  }
+  { TextBox3 TextBox
+    MoveScaled(93,14,28,3)
+    Text = ("/var/www/html/pesu.htm")
+    Alignment = Align.Center
+  }
+  { ToggleButton1 ToggleButton
+    MoveScaled(78,13,14,4)
+    Text = ("Use Data File")
+  }
+  { Label14 Label
+    MoveScaled(1,17,38,4)
+    Text = ("Car block timeout (s)")
+    Alignment = Align.Right
+  }
+  { Slider8 Slider
+    MoveScaled(40,17,28,4)
+    MinValue = 20
+    MaxValue = 600
+    Value = 1
+  }
+  { ValueBox13 ValueBox
+    MoveScaled(69,17,6,4)
+  }
+  { TextBox4 TextBox
+    MoveScaled(97,19,16,3)
+    Alignment = Align.Center
+  }
+  { ToggleButton2 ToggleButton
+    MoveScaled(78,18,18,5)
+    Text = ("Block next car")
+  }
+  { ValueBox14 ValueBox
+    MoveScaled(115,18,6,4)
+    Font = Font["+2"]
+  }
+  { ToggleButton3 ToggleButton
+    MoveScaled(1,13,18,5)
+    Text = ("DisableLocal")
+  }
+  { ToggleButton4 ToggleButton
+    MoveScaled(1,19,18,5)
+    Text = ("Set Fault State")
+  }
+}

@@ -1,0 +1,479 @@
+' Gambas class file
+
+Public gChart As Chart
+Public glock As Integer
+Public runloop As Integer
+Public Comm_Port As String
+Public SComm As New SerialPort
+Public WashDurationTimer As Timer
+Public LocalWashPauseTimer As Timer
+Public wrfiletimer As Timer
+Public hFile As File
+Public UseDataFile As Boolean
+Public faultPrevState As Boolean
+Public fileStr As String
+
+Public WashProgress As Integer
+Public LocalDelay As Integer
+Public ADAMread As String
+Public ADAMwrite As String
+Public LocalWashNumber As Integer
+Public LocalWashCounter As Integer
+Public LocalRandomizedDelay As Integer
+Public IncomingWashNumber As Integer
+Public tempString As String
+Public TotalWashes As Integer
+Public CarBlocked As Integer
+Public CarBlockTimer As Integer
+Public CarBlockCNT As Integer
+
+Public Sub _new()
+
+'Dim Rval As Float
+'Dim dataCPac As New Float[21]
+Me.Center
+Button3.Enabled = False
+Button1.Enabled = False
+' Button2.enabled = False
+Read_button.enabled = False
+glock = 0
+Runloop = 1
+LocalWashCounter = 0
+
+ComboBox1.add("/dev/ttyUSB0")
+ComboBox1.add("/dev/ttyUSB1")
+ComboBox1.add("/dev/ttyS0")
+ComboBox1.add("/dev/ttyS1")
+ComboBox1.add("/dev/rfcomm0")
+ComboBox1.add("/dev/rfcomm1")
+ComboBox1.add("Random")
+
+ValueBox2.value = 3 'Local Command duration
+ValueBox1.value = 10 'Delay between local washes
+ValueBox3.value = 10 'busy status delay (1/10)s
+ValueBox6.value = 6 'Wash length
+ValueBox9.value = 1 'Wash length randomizer
+ValueBox8.value = 1 'Local delay randomizer
+ValueBox7.value = 16 'Max Wash random number
+ValueBox13.value = 20 'Blocked car delay
+
+End
+
+Public Sub Form_Open()
+
+
+End
+
+Public Sub Label1_MouseDown()
+
+  
+
+End
+
+Public Sub Button1_Click()
+
+SComm.PortName = ComboBox1.Text ' Comm_Port
+SComm.Speed = "9600"
+SComm.Parity = 0
+SComm.DataBits = "8"
+SComm.StopBits = "1"
+SComm.FlowControl = 0
+
+Button1.Enabled = False ' disable port button until port closed
+Button1.Text = "Port OK"
+Read_button.enabled = True
+Try 
+SComm.Open()
+
+If Error Then    
+Message("Serial port not available")
+Button1.Enabled = True
+Button1.Text = "Test port"
+Read_button.enabled = False
+Endif 
+
+End
+
+Public Sub Exit_Click()
+ 
+  If SComm.Status = Net.Active
+    Print #SComm, "#010000" & Chr$(13); ' Set ADAM output to 0
+  'Close SComm
+    SComm.Close()
+  Endif
+
+  Close #hFile
+  
+ Me.Close
+End
+
+
+
+Public Sub Read_button_Click()
+
+Dim vCount As Integer
+Dim gCount As Integer
+Dim aCount As Integer
+Dim dCount As Integer
+Dim devValue As Float
+Dim aveValue As Float
+Dim Rval As Float
+Dim rxBuffer As String
+Dim exponent As Integer
+
+
+' NEW VARIABLES
+
+
+
+ADAMread = "$016" & Chr$(13)
+
+
+UseDataFile = False
+If ToggleButton1.value = True Then
+  Try hFile = Open TextBox3.Text For Create
+  If Error Then
+    Message("File open error")
+    ToggleButton1.Value = False
+    Return
+  Endif
+  UseDataFile = True
+Endif
+
+
+  wrfiletimer = New Timer As "Filetimer"
+  wrfiletimer.Delay = 1000
+  wrfiletimer.Enabled = True
+
+
+
+
+' Button2.Enabled = False
+Read_button.Enabled = False
+Button3.Enabled = True
+
+'Print #SComm, "#010007" & Chr$(13);
+Runloop = 1
+
+Do
+    
+    Localdelay = 0
+    LocalRandomizedDelay = ValueBox1.value + Int(Rnd(1, ValueBox8.value))
+    Do While Localdelay < LocalRandomizedDelay
+      Print #SComm, ADAMread; 
+      Wait 0.1
+      Try Read #SComm, rxBuffer, Lof(SComm)
+      If Error Then
+        Message.info("Port error")
+      Endif 
+      TextBox1.text = CStr(rxBuffer) & ":" & CStr(Len(rxbuffer))
+      If Len(rxbuffer) = 8
+        tempString = Mid$(CStr(rxbuffer), 4, 2)
+        IncomingWashNumber = Val("&h" & tempString)
+        IncomingWashNumber = IncomingWashNumber Xor 127
+        ValueBox4.value = IncomingWashNumber
+      Endif
+
+' WashQ wash starts here
+      If IncomingWashNumber <> 0 Then
+        ValueBox4.Background = Color.Orange
+        Wait ValueBox3.Value / 10
+        ' Nostetaan busy-bitti
+        ADAMwrite = "#011701" & Chr$(13)
+        ' ADAMwrite = "#010080" & Chr$(13)
+        Print #SComm, ADAMwrite;
+        TextBox2.text = ADAMwrite
+        ValueBox12.value = 0  
+        WashProgress = 0 
+         
+        If ToggleButton2.Value = False Then
+          Do While WashProgress < ValueBox6.Value
+            ProgressBar1.value = (WashProgress + 1) / ValueBox6.Value
+            WashProgress = WashProgress + 1
+            'If washprogress = ValueBox2.Value Then
+            ' Jätetään vain busybitti päälle
+             ' ADAMwrite = "#010080" & Chr$(13)
+             ' Print #SComm, ADAMwrite;
+            'Endif
+            Wait 1
+          Loop Until Runloop = 0
+          TotalWashes = TotalWashes + 1
+          LocalWashCounter = LocalWashCounter + 1
+          ToggleButton2.Value = False
+        Endif
+        
+        If ToggleButton2.Value = True Then
+          CarBlockCNT = 0
+          Do While CarBlockCNT < ValueBox13.Value
+            CarBlockCNT = CarBlockCNT + 1
+            ValueBox14.value = ValueBox13.value - CarBlockCNT
+            Wait 1
+          Loop Until Runloop = 0
+          ADAMwrite = "#011700" & Chr$(13) 'Drop busy bit
+          Print #SComm, ADAMwrite;
+          TextBox2.text = ADAMwrite
+          CarBlocked = 0
+          IncomingWashNumber = 0
+          ToggleButton2.value = False
+        Endif
+        
+        
+        ValueBox10.value = IncomingWashNumber
+        ValueBox4.Background = Color.White
+
+        WashProgress = 0 
+        progressBar1.value = 0
+         Print #SComm, "#010000" & Chr$(13); ' Set ADAM output to 0
+         IncomingWashNumber = 0
+        Goto Passlocal
+      Endif
+
+' Washq wash ends here      
+    If ToggleButton4.Value = False Then
+      If ToggleButton3.Value = False Then
+       Localdelay = Localdelay + 1 
+       Wait 0.8     
+       ValueBox12.value = LocalRandomizedDelay - Localdelay
+      Endif
+      If ToggleButton3.Value = True Then
+       ValueBox12.value = -1
+      Endif
+      If faultPrevState = True Then
+        faultPrevState = False
+        ' Nollataan Fault-bitti
+        ADAMwrite = "#011600" & Chr$(13)
+        Print #SComm, ADAMwrite;
+        TextBox2.text = ADAMwrite
+      Endif  
+    Endif
+    
+    If ToggleButton4.Value = True Then
+      ' Nostetaan Fault-bitti
+      If faultPrevState = False Then
+        ADAMwrite = "#011601" & Chr$(13)
+        Print #SComm, ADAMwrite;
+        TextBox2.text = ADAMwrite
+        faultPrevState = True
+      Endif
+    Endif 
+      
+    Loop Until Runloop = 0
+    ' Wait
+    
+' Local Wash Starting
+    ValueBox5.Background = Color.Orange
+    LocalWashNumber = Int(Rnd(1, ValueBox7.value))
+    ValueBox5.value = LocalWashNumber
+    ' kirjoitetaan pesunumero koneelle
+    ADAMwrite = "#0100" & Hex$(LocalWashNumber, 2) & Chr$(13)
+    Print #SComm, ADAMwrite;
+    TextBox2.text = ADAMwrite
+    Wait ValueBox3.Value / 10
+    ' Nostetaan busy-bitti
+    ADAMwrite = "#011701" & Chr$(13)
+    Print #SComm, ADAMwrite;
+    TextBox2.text = ADAMwrite
+    
+    If ToggleButton2.value = False Then
+      Do While WashProgress < ValueBox6.Value
+        ' Print #SComm, "#010000" & Chr$(13); ' Set ADAM output to 0
+        ProgressBar1.value = (WashProgress + 1) / ValueBox6.Value
+        WashProgress = WashProgress + 1
+        If washprogress = ValueBox2.Value Then
+        ' Jätetään vain busybitti päälle
+          ADAMwrite = "#010080" & Chr$(13)
+          Print #SComm, ADAMwrite;
+        Endif
+        Wait 1
+      Loop Until Runloop = 0
+      Print #SComm, "#010000" & Chr$(13); ' Set ADAM output to 0
+      ToggleButton2.Value = False
+      TotalWashes = TotalWashes + 1
+    Endif
+    
+    If ToggleButton2.value = True Then
+      CarBlockCNT = 0
+      Do While CarBlockCNT < ValueBox13.Value
+        CarBlockCNT = CarBlockCNT + 1
+        If CarBlockCNT = ValueBox2.Value Then
+          ' Jätetään vain busybitti päälle
+          ADAMwrite = "#010080" & Chr$(13)
+          Print #SComm, ADAMwrite;
+        Endif
+      ValueBox14.value = ValueBox13.value - CarBlockCNT  
+      Wait 1
+      Loop Until Runloop = 0
+      Print #SComm, "#010000" & Chr$(13); ' Set ADAM output to 0
+      CarBlocked = 0
+      ToggleButton2.value = False
+      IncomingWashNumber = 0
+    Endif
+    
+    WashProgress = 0
+    ProgressBar1.value = 0
+
+    ValueBox10.value = LocalWashNumber
+    ValueBox5.Background = Color.White 
+    ValueBox5.value = 0
+' LocalWashEnding
+  
+Passlocal:
+    'Flush Serial port
+    Try Read #SComm, rxBuffer, Lof(SComm)
+      If Error Then
+        Message.info("Port error")
+      Endif
+ValueBox11.value = TotalWashes   
+
+ ' Wait ValueBox2.Value
+
+    
+Loop Until Runloop = 0
+
+ProgressBar1.value = 1
+' Button2.Enabled = True
+Button3.Enabled = False
+' Read_button.Enabled = True
+'Chart.Count = vCount - 1
+wrfiletimer.Enabled = False
+
+End
+ 
+
+Public Sub Slider2_Change()
+
+  ValueBox2.value = Slider2.Value 
+  
+End
+
+
+Public Sub Button3_Click()
+
+  ' Kill reading loop
+  Runloop = 0 
+
+End
+
+Public Sub ComboBox1_Change()
+
+  'Comm_Port = ComboBox1.Text
+  If ComboBox1.text <> "Random"
+    Button1.Enabled = True
+  Else
+    Button1.Enabled = False
+  Endif
+
+' Button2.enabled = True
+' Read_button.enabled = True
+
+End
+
+
+Public Sub Slider1_Change()
+
+ ValueBox1.value = Slider1.Value   
+
+End
+
+Public Sub Slider3_Change()
+
+  ValueBox3.value = Slider3.Value 
+
+End
+
+Public Sub Slider4_Change()
+
+  ValueBox6.value = Slider4.Value 
+
+End
+
+Public Sub Slider5_Change()
+
+  ValueBox7.value = Slider5.Value
+
+End
+
+Public Sub Slider6_Change()
+
+  ValueBox8.value = Slider6.Value
+
+End
+
+Public Sub Slider7_Change()
+
+  ValueBox9.value = Slider7.Value
+
+End
+
+Public Sub Filetimer_timer()
+  If ToggleButton2.value = True Then
+    TextBox4.text = "Block active"
+  Else 
+    TextBox4.text = ""
+  Endif
+  
+  
+  
+' Write file
+  If ToggleButton1.value = True And Runloop = 1 Then    
+    Seek #hFile, 0
+    fileStr = "<!DOCTYPE HTML PUBLIC " & Chr$(34) & "- / / W3C / / DTD HTML 3.2 Final / / EN " & Chr$(34) & ">" & Chr(10)
+    filestr = filestr & "<HTML><TITLE>WashQsim</TITLE><head><meta http-equiv=" & Chr$(34) & "refresh" 
+    fileStr = fileStr & Chr$(34) & " content=" & Chr$(34) & "1" & Chr$(34) & " /> </head> <body> " & Chr(10)
+    fileStr = fileStr & "<H1>Time: " & Str$(Time(Now)) & "<br>"
+    fileStr = fileStr & "Local Wash num: " & CStr(ValueBox5.Value) & "<br>"
+    fileStr = fileStr & "Next local: " & CStr(ValueBox12.Value) & "<br>"
+    fileStr = fileStr & "WashQ wash num: " & CStr(IncomingWashNumber) & "<br>"
+    fileStr = fileStr & "Wash pros: " & CStr(Int(100 * ((WashProgress) / ValueBox6.Value))) & "%<br>"
+    fileStr = fileStr & "Tot washes (:Q): " & CStr(TotalWashes) & " : " & CStr(LocalWashCounter) & "<br>"
+    fileStr = fileStr & "NextCarBlock: " & CStr(ToggleButton2.value) & "<br>"
+    fileStr = fileStr & "Block counter: " & CStr(ValueBox14.Value) & "<br>"
+    fileStr = fileStr & "</H1></body></HTML>                                        " & Chr(10)
+    Write #hFile, fileStr, Len(fileStr)
+  Endif  
+  
+  If ToggleButton1.value = True And runloop = 0 Then
+    Seek #hFile, 0
+    fileStr = "<!DOCTYPE HTML PUBLIC " & Chr$(34) & "- / / W3C / / DTD HTML 3.2 Final / / EN " & Chr$(34) & ">" & Chr(10)
+    filestr = filestr & "<HTML><TITLE>WashQsim</TITLE><head><meta http-equiv=" & Chr$(34) & "refresh" 
+    fileStr = fileStr & Chr$(34) & " content=" & Chr$(34) & "15" & Chr$(34) & " /> </head> <body> " & Chr(10)
+    fileStr = fileStr & "<H2>STOPPED"
+    fileStr = fileStr & "</H2></body></HTML>                                                                                                                                              " & Chr(10)    
+  Endif
+  
+  
+End
+
+'Public WashProgress As Integer
+'Public LocalDelay As Integer
+'Public ADAMread As String
+'Public ADAMwrite As String
+'Public LocalWashNumber As Integer
+'Public LocalRandomizedDelay As Integer
+'Public IncomingWashNumber As Integer
+'Public tempString As String
+'Public TotalWashes As Integer
+
+Public Sub Slider8_Change()
+
+  ValueBox13.value = Slider8.Value
+
+End
+
+Public Sub Button2_Click()
+
+  If TextBox4.text = "" Then
+    CarBlocked = 1
+    TextBox4.text = "Block active"
+  Endif
+  If TextBox4.text = "Block active" Then
+    CarBlocked = 0
+    TextBox4.text = ""
+  Endif
+End
+
+Public Sub ToggleButton2_Click()
+
+  
+
+End
